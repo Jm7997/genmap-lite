@@ -1,0 +1,13 @@
+* text=auto eol=lf
+*.png binary
+*.gif binary
+/.gitattributes export-ignore
+/.gitignore export-ignore
+/demo export-ignore
+/media export-ignore
+/tests export-ignore
+/icon.svg export-ignore
+/icon.svg.import export-ignore
+/project.godot export-ignore
+/README.md export-ignore
+/LICENSE export-ignore

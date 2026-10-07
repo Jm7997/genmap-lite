@@ -1,0 +1,160 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://addons/genmap/genmap_dock.gd" id="1_dock"]
+
+[node name="GenMap" type="VBoxContainer"]
+custom_minimum_size = Vector2(260, 0)
+offset_right = 300.0
+offset_bottom = 640.0
+theme_override_constants/separation = 6
+script = ExtResource("1_dock")
+
+[node name="PromptLabel" type="Label" parent="."]
+layout_mode = 2
+text = "Prompt"
+
+[node name="PromptEdit" type="TextEdit" parent="."]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 110)
+layout_mode = 2
+placeholder_text = "mazmorra de 20x20 con 3 habitaciones y 2 cofres"
+wrap_mode = 1
+
+[node name="ModelLabel" type="Label" parent="."]
+layout_mode = 2
+text = "Modelo (Ollama)"
+
+[node name="ModelRow" type="HBoxContainer" parent="."]
+layout_mode = 2
+
+[node name="ModelOption" type="OptionButton" parent="ModelRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+clip_text = true
+
+[node name="CheckOllamaButton" type="Button" parent="ModelRow"]
+unique_name_in_owner = true
+layout_mode = 2
+tooltip_text = "Comprueba que Ollama está abierto y qué modelos tienes instalados."
+text = "Comprobar"
+
+[node name="AdvancedToggle" type="Button" parent="."]
+unique_name_in_owner = true
+layout_mode = 2
+toggle_mode = true
+text = "▸ Ajustes avanzados"
+flat = true
+alignment = 0
+
+[node name="AdvancedPanel" type="VBoxContainer" parent="."]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="ManualGrid" type="GridContainer" parent="AdvancedPanel"]
+unique_name_in_owner = true
+layout_mode = 2
+columns = 4
+
+[node name="Corner" type="Control" parent="AdvancedPanel/ManualGrid"]
+layout_mode = 2
+
+[node name="SourceHeader" type="Label" parent="AdvancedPanel/ManualGrid"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Source"
+horizontal_alignment = 1
+
+[node name="AtlasXHeader" type="Label" parent="AdvancedPanel/ManualGrid"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Atlas X"
+horizontal_alignment = 1
+
+[node name="AtlasYHeader" type="Label" parent="AdvancedPanel/ManualGrid"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Atlas Y"
+horizontal_alignment = 1
+
+[node name="FloorLabel" type="Label" parent="AdvancedPanel/ManualGrid"]
+layout_mode = 2
+text = "Suelo"
+
+[node name="FloorSourceSpin" type="SpinBox" parent="AdvancedPanel/ManualGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+max_value = 9999.0
+
+[node name="FloorAtlasXSpin" type="SpinBox" parent="AdvancedPanel/ManualGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+max_value = 255.0
+
+[node name="FloorAtlasYSpin" type="SpinBox" parent="AdvancedPanel/ManualGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+max_value = 255.0
+
+[node name="WallLabel" type="Label" parent="AdvancedPanel/ManualGrid"]
+layout_mode = 2
+text = "Muro"
+
+[node name="WallSourceSpin" type="SpinBox" parent="AdvancedPanel/ManualGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+max_value = 9999.0
+
+[node name="WallAtlasXSpin" type="SpinBox" parent="AdvancedPanel/ManualGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+max_value = 255.0
+value = 1.0
+
+[node name="WallAtlasYSpin" type="SpinBox" parent="AdvancedPanel/ManualGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+max_value = 255.0
+
+[node name="ResetButton" type="Button" parent="AdvancedPanel"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Restaurar valores por defecto"
+
+[node name="ProLabel" type="Label" parent="AdvancedPanel"]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.5, 0.82, 1, 1)
+text = "GenMap Pro añade terrenos (autotiling), entidades, presets, mapas de hasta 128x128, exportación a JSON y API para tu juego."
+autowrap_mode = 3
+
+[node name="HSeparator" type="HSeparator" parent="."]
+layout_mode = 2
+
+[node name="TargetLabel" type="Label" parent="."]
+unique_name_in_owner = true
+layout_mode = 2
+autowrap_mode = 3
+
+[node name="GenerateButton" type="Button" parent="."]
+unique_name_in_owner = true
+layout_mode = 2
+disabled = true
+text = "Generar mapa"
+
+[node name="ProgressBar" type="ProgressBar" parent="."]
+unique_name_in_owner = true
+visible = false
+layout_mode = 2
+
+[node name="StatusLabel" type="Label" parent="."]
+unique_name_in_owner = true
+layout_mode = 2
+autowrap_mode = 3

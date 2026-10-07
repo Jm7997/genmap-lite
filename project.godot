@@ -1,0 +1,19 @@
+; Engine configuration file.
+; GenMap Lite 1.0.0: proyecto de ejemplo con el addon instalado.
+
+config_version=5
+
+[application]
+
+config/name="GenMap Lite (demo)"
+run/main_scene="res://demo/demo_lite.tscn"
+config/features=PackedStringArray("4.3")
+config/icon="res://icon.svg"
+
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/genmap/plugin.cfg")
+
+[rendering]
+
+textures/canvas_textures/default_texture_filter=0

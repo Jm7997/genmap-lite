@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
+  <rect x="4" y="4" width="120" height="120" rx="22" fill="#1f2130"/>
+  <!-- Mazmorra vista desde arriba: muros (gris azulado) que rodean dos salas unidas por un pasillo -->
+  <g fill="#6a7189">
+    <rect x="18" y="22" width="44" height="8"/>
+    <rect x="18" y="22" width="8" height="44"/>
+    <rect x="18" y="58" width="20" height="8"/>
+    <rect x="54" y="22" width="8" height="24"/>
+    <rect x="54" y="46" width="22" height="8"/>
+    <rect x="30" y="66" width="8" height="18"/>
+    <rect x="30" y="76" width="18" height="8"/>
+    <rect x="66" y="54" width="8" height="12"/>
+    <rect x="66" y="62" width="44" height="8"/>
+    <rect x="102" y="62" width="8" height="44"/>
+    <rect x="48" y="98" width="62" height="8"/>
+    <rect x="48" y="76" width="8" height="30"/>
+  </g>
+  <g fill="#2e3142">
+    <rect x="26" y="30" width="28" height="28"/>
+    <rect x="38" y="58" width="8" height="18"/>
+    <rect x="38" y="66" width="28" height="10"/>
+    <rect x="56" y="70" width="46" height="28"/>
+  </g>
+  <!-- Cofre -->
+  <rect x="82" y="80" width="12" height="9" rx="1" fill="#a8692e"/>
+  <rect x="82" y="83" width="12" height="2" fill="#e0b84a"/>
+  <!-- Destello de IA -->
+  <path d="M100 14 L104 26 L116 30 L104 34 L100 46 L96 34 L84 30 L96 26 Z" fill="#7fd1ff"/>
+</svg>
