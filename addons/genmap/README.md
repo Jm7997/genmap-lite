@@ -31,7 +31,7 @@
 | Presets con nombre | — | ✅ |
 | Soporte | Issues de GitHub | Prioritario |
 
-GenMap Pro está disponible en itch.io.
+**[Consigue GenMap Pro](https://jaime-7997.itch.io/genmap-pro)**
 
 ## Requisitos
 

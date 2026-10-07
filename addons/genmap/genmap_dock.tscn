@@ -135,6 +135,11 @@ theme_override_colors/font_color = Color(0.5, 0.82, 1, 1)
 text = "GenMap Pro añade terrenos (autotiling), entidades, presets, mapas de hasta 128x128, exportación a JSON y API para tu juego."
 autowrap_mode = 3
 
+[node name="ProLink" type="LinkButton" parent="AdvancedPanel"]
+layout_mode = 2
+text = "Ver GenMap Pro"
+uri = "https://jaime-7997.itch.io/genmap-pro"
+
 [node name="HSeparator" type="HSeparator" parent="."]
 layout_mode = 2
 
