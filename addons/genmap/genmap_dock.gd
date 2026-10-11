@@ -6,6 +6,7 @@ extends VBoxContainer
 ## El último estado (modelo, ajustes, panel abierto) se guarda en la metadata del proyecto (.godot/).
 
 signal generate_requested(prompt: String, model: String, layer: TileMapLayer, settings: Dictionary)
+signal generate_classic_requested(params: Dictionary, layer: TileMapLayer, settings: Dictionary)
 signal cancel_requested
 signal check_ollama_requested
 
@@ -21,6 +22,8 @@ const DEFAULT_MODEL := "qwen3:8b"
 const MAX_PROMPT_LENGTH := 500
 const SETTINGS_SECTION := "genmap"
 const GENERATE_TEXT := "Generar mapa"
+enum Mode { CLASSIC, PROMPT }
+const MODE_LABELS := ["Clásico: tamaño y salas (no necesita nada)", "Descripción en texto (necesita Ollama)"]
 const CANCEL_TEXT := "Cancelar"
 const ADVANCED_OPEN_TEXT := "▾ Ajustes avanzados"
 const ADVANCED_CLOSED_TEXT := "▸ Ajustes avanzados"
@@ -31,6 +34,14 @@ const STAGE_TEXT := {
 	"paint": "Pintando tiles...",
 }
 
+@onready var _mode_option: OptionButton = %ModeOption
+@onready var _classic_panel: VBoxContainer = %ClassicPanel
+@onready var _width_spin: SpinBox = %WidthSpin
+@onready var _height_spin: SpinBox = %HeightSpin
+@onready var _rooms_spin: SpinBox = %RoomsSpin
+@onready var _prompt_label: Label = %PromptLabel
+@onready var _model_label: Label = %ModelLabel
+@onready var _model_row: HBoxContainer = %ModelRow
 @onready var _prompt_edit: TextEdit = %PromptEdit
 @onready var _model_option: OptionButton = %ModelOption
 @onready var _check_ollama_button: Button = %CheckOllamaButton
@@ -63,6 +74,13 @@ func setup() -> void:
 		_model_option.add_item(MODELS[i].label, i)
 		_model_option.set_item_metadata(i, MODELS[i].id)
 	_select_model(str(_load_setting("model", DEFAULT_MODEL)))
+	for i in MODE_LABELS.size():
+		_mode_option.add_item(MODE_LABELS[i], i)
+	_mode_option.select(clampi(int(_load_setting("mode", Mode.CLASSIC)), 0, MODE_LABELS.size() - 1))
+	# El tamaño máximo depende de la edición (Lite: 48, Pro: 128).
+	for spin in [_width_spin, _height_spin]:
+		spin.max_value = MapGenerator.MAX_MAP_SIZE
+	_apply_classic_params(_load_setting("classic", {}))
 
 	_apply_settings(_load_saved_settings())
 	var advanced_open: bool = _load_setting("advanced_open", false) == true
@@ -73,6 +91,7 @@ func setup() -> void:
 	_prompt_edit.text_changed.connect(_refresh_buttons)
 	_prompt_edit.gui_input.connect(_on_prompt_gui_input)
 	_generate_button.pressed.connect(_on_generate_pressed)
+	_mode_option.item_selected.connect(_on_mode_selected)
 	_check_ollama_button.pressed.connect(_on_check_ollama_pressed)
 	_advanced_toggle.toggled.connect(_on_advanced_toggled)
 	_reset_button.pressed.connect(_on_reset_pressed)
@@ -81,7 +100,11 @@ func setup() -> void:
 	EditorInterface.get_selection().selection_changed.connect(_on_selection_changed)
 
 	_on_selection_changed()
-	set_status("Escribe un prompt y selecciona un TileMapLayer en la escena.", Status.INFO)
+	_apply_mode()
+	if _is_classic():
+		set_status("Elige el tamaño y las salas, selecciona un TileMapLayer y pulsa Generar.", Status.INFO)
+	else:
+		set_status("Escribe un prompt y selecciona un TileMapLayer en la escena.", Status.INFO)
 
 
 func get_selected_model() -> String:
@@ -104,6 +127,9 @@ func set_busy(busy: bool, message := "") -> void:
 	_busy = busy
 	_prompt_edit.editable = not busy
 	_model_option.disabled = busy
+	_mode_option.disabled = busy
+	for spin in _classic_spin_boxes():
+		spin.editable = not busy
 	_check_ollama_button.disabled = busy
 	_reset_button.disabled = busy
 	for spin in _spin_boxes():
@@ -133,14 +159,16 @@ func set_ollama_status(result: Dictionary) -> void:
 		return  # no pisar el progreso de una generación en curso
 	if result.get("ok") != true:
 		_ollama_checked = false
-		set_status(str(result.get("error", "Ollama no responde.")), Status.ERROR)
+		if not _is_classic():
+			set_status(str(result.get("error", "Ollama no responde.")), Status.ERROR)
 		return
 	_ollama_checked = true
 	_installed_models = result.get("models", PackedStringArray())
 	for i in _model_option.item_count:
 		var installed := _is_installed(str(_model_option.get_item_metadata(i)))
 		_model_option.set_item_text(i, MODELS[i].label + ("" if installed else "  (no instalado)"))
-	_report_selected_model()
+	if not _is_classic():
+		_report_selected_model()
 
 
 func set_status(message: String, status := Status.INFO) -> void:
@@ -159,6 +187,15 @@ func _on_generate_pressed() -> void:
 	if _busy:
 		cancel_requested.emit()
 		set_status("Cancelando...", Status.INFO)
+		return
+	if _is_classic():
+		var classic_error := _check_target()
+		if not classic_error.is_empty():
+			set_status(classic_error, Status.ERROR)
+			return
+		var params := get_classic_params()
+		_save_setting("classic", params)
+		generate_classic_requested.emit(params, _target, get_settings())
 		return
 	var prompt := _prompt_edit.text.strip_edges()
 	if prompt.is_empty():
@@ -201,6 +238,56 @@ func _on_selection_changed() -> void:
 	else:
 		_target_label.text = "Destino: %s" % _target.name
 	_refresh_buttons()
+
+
+## Parámetros del modo clásico, en el formato de ClassicGenerator.DEFAULT_PARAMS.
+func get_classic_params() -> Dictionary:
+	var params := {
+		"width": int(_width_spin.value),
+		"height": int(_height_spin.value),
+		"rooms": int(_rooms_spin.value),
+		"chests": 0,
+		"treasure_rooms": 0,
+		"boss": false,
+	}
+	return params
+
+
+func _apply_classic_params(saved: Variant) -> void:
+	if not (saved is Dictionary):
+		return
+	var spins := {"width": _width_spin, "height": _height_spin, "rooms": _rooms_spin}
+	for key in spins:
+		if saved.get(key) is int or saved.get(key) is float:
+			spins[key].value = saved[key]
+
+
+func _is_classic() -> bool:
+	return _mode_option.selected == Mode.CLASSIC
+
+
+func _on_mode_selected(index: int) -> void:
+	_save_setting("mode", index)
+	_apply_mode()
+	if _is_classic():
+		set_status("Elige el tamaño y las salas, selecciona un TileMapLayer y pulsa Generar.", Status.INFO)
+	elif _ollama_checked:
+		_report_selected_model()
+	else:
+		check_ollama_requested.emit()
+
+
+func _apply_mode() -> void:
+	var classic := _is_classic()
+	_classic_panel.visible = classic
+	for node: Control in [_prompt_label, _prompt_edit, _model_label, _model_row]:
+		node.visible = not classic
+	_refresh_buttons()
+
+
+func _classic_spin_boxes() -> Array[SpinBox]:
+	var spins: Array[SpinBox] = [_width_spin, _height_spin, _rooms_spin]
+	return spins
 
 
 func _on_model_selected(index: int) -> void:
@@ -291,8 +378,8 @@ func _spin_boxes() -> Array[SpinBox]:
 
 func _refresh_buttons() -> void:
 	# Ocupado: el botón principal es "Cancelar" y siempre está activo.
-	_generate_button.disabled = not _busy and (
-			_prompt_edit.text.strip_edges().is_empty() or not is_instance_valid(_target))
+	var needs_prompt := not _is_classic() and _prompt_edit.text.strip_edges().is_empty()
+	_generate_button.disabled = not _busy and (needs_prompt or not is_instance_valid(_target))
 
 
 func _select_model(model_id: String) -> void:

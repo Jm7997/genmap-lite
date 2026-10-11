@@ -6,6 +6,7 @@ extends SceneTree
 const TESTS := [
 	"res://tests/test_map_generator.gd",
 	"res://tests/test_ollama_client.gd",
+	"res://tests/test_classic_generator.gd",
 	"res://tests/test_genmap_api.gd",  # solo en Pro; se omite si no existe
 ]
 

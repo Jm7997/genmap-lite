@@ -20,6 +20,7 @@ signal generation_failed(message: String)
 
 const OllamaClient := preload("res://addons/genmap/ollama_client.gd")
 const MapGenerator := preload("res://addons/genmap/map_generator.gd")
+const ClassicGenerator := preload("res://addons/genmap/classic_generator.gd")
 ## Modelo de Ollama usado si [code]config[/code] no indica otro.
 const DEFAULT_MODEL := "qwen3:8b"
 ## Reintentos si el modelo devuelve un layout inválido o sin salas dentro del mapa.
@@ -98,6 +99,29 @@ func generate_dungeon(prompt: String, config: Dictionary = {}) -> Dictionary:
 		return _end(plan)
 	var meta := {"prompt": prompt, "model": model}
 	return await _apply_and_attach(plan, map_data, meta, layer_id, settings, config, generation)
+
+
+## Genera un mapa con el modo clásico: a partir de parámetros, sin Ollama ni nada que instalar.
+## [param params] admite [code]width[/code], [code]height[/code], [code]rooms[/code],
+## [code]chests[/code], [code]treasure_rooms[/code], [code]boss[/code] y [code]seed[/code]
+## (ver [code]ClassicGenerator.DEFAULT_PARAMS[/code]). Mismas garantías que el modo descripción:
+## salas conectadas, paredes cerradas, jefe en la sala más lejana, deshacer en el editor.
+## [codeblock]
+## var result = await GenMapAPI.generate_classic({"width": 48, "height": 36, "rooms": 8, "boss": true}, {"layer": $Ground})
+## [/codeblock]
+func generate_classic(params: Dictionary = {}, config: Dictionary = {}) -> Dictionary:
+	if not Engine.is_editor_hint():
+		return _reject("GenMap Lite genera desde el panel del editor. La generación en tu juego es de GenMap Pro.")
+	var start_error := _check_can_start(config)
+	if not start_error.is_empty():
+		return _reject(start_error)
+	var settings := _settings_from(config)
+	var validated := OllamaClient.validate_layout(ClassicGenerator.generate(params), settings.generate_entities == true)
+	if validated.has("error"):
+		return _reject(validated.error)
+	var generation := _begin("")
+	var layer_id := (config.layer as TileMapLayer).get_instance_id()
+	return await _build_and_apply(validated.data, {"mode": "classic"}, layer_id, settings, config, generation)
 
 
 ## Comprueba si Ollama responde y qué modelos tiene instalados, sin generar nada.

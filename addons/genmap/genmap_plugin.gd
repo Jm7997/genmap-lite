@@ -24,6 +24,7 @@ func _enter_tree() -> void:
 	add_control_to_dock(DOCK_SLOT_RIGHT_UL, _dock)
 	_dock.setup()
 	_dock.generate_requested.connect(_on_generate_requested)
+	_dock.generate_classic_requested.connect(_on_generate_classic_requested)
 	_dock.cancel_requested.connect(_api.cancel)
 	_dock.check_ollama_requested.connect(_check_ollama)
 	# Al abrir el editor: marca qué modelos están instalados y avisa si Ollama no está abierto.
@@ -38,6 +39,11 @@ func _exit_tree() -> void:
 	if is_instance_valid(_api):
 		_api.queue_free()  # su _exit_tree cancela la generación en curso
 	_api = null
+
+
+func _on_generate_classic_requested(params: Dictionary, layer: TileMapLayer, settings: Dictionary) -> void:
+	_dock.set_busy(true, "Generando mapa...")
+	_api.generate_classic(params, _config(layer, settings, ""))
 
 
 func _on_generate_requested(prompt: String, model: String, layer: TileMapLayer, settings: Dictionary) -> void:

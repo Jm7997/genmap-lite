@@ -9,7 +9,70 @@ offset_bottom = 640.0
 theme_override_constants/separation = 6
 script = ExtResource("1_dock")
 
+[node name="ModeRow" type="HBoxContainer" parent="."]
+layout_mode = 2
+
+[node name="ModeLabel" type="Label" parent="ModeRow"]
+layout_mode = 2
+text = "Modo"
+
+[node name="ModeOption" type="OptionButton" parent="ModeRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+clip_text = true
+
+[node name="ClassicPanel" type="VBoxContainer" parent="."]
+unique_name_in_owner = true
+layout_mode = 2
+
+[node name="ClassicGrid" type="GridContainer" parent="ClassicPanel"]
+layout_mode = 2
+columns = 2
+
+[node name="WidthLabel" type="Label" parent="ClassicPanel/ClassicGrid"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Ancho"
+
+[node name="WidthSpin" type="SpinBox" parent="ClassicPanel/ClassicGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+min_value = 12.0
+max_value = 128.0
+value = 40.0
+suffix = "tiles"
+
+[node name="HeightLabel" type="Label" parent="ClassicPanel/ClassicGrid"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Alto"
+
+[node name="HeightSpin" type="SpinBox" parent="ClassicPanel/ClassicGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+min_value = 12.0
+max_value = 128.0
+value = 30.0
+suffix = "tiles"
+
+[node name="RoomsLabel" type="Label" parent="ClassicPanel/ClassicGrid"]
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Salas"
+
+[node name="RoomsSpin" type="SpinBox" parent="ClassicPanel/ClassicGrid"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+min_value = 1.0
+max_value = 64.0
+value = 6.0
+
 [node name="PromptLabel" type="Label" parent="."]
+unique_name_in_owner = true
 layout_mode = 2
 text = "Prompt"
 
@@ -21,10 +84,12 @@ placeholder_text = "mazmorra de 20x20 con 3 habitaciones y 2 cofres"
 wrap_mode = 1
 
 [node name="ModelLabel" type="Label" parent="."]
+unique_name_in_owner = true
 layout_mode = 2
 text = "Modelo (Ollama)"
 
 [node name="ModelRow" type="HBoxContainer" parent="."]
+unique_name_in_owner = true
 layout_mode = 2
 
 [node name="ModelOption" type="OptionButton" parent="ModelRow"]
