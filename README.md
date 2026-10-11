@@ -18,6 +18,7 @@
 - **`Ctrl+Z`** deshace cada generación.
 - **Sin congelar el editor:** el cálculo va en un hilo aparte y el pintado se reparte entre frames, con barra de progreso y botón Cancelar.
 - **Botón Comprobar:** indica si Ollama está abierto y si tienes el modelo instalado.
+- **Reintento automático:** si el modelo devuelve un mapa inválido, se vuelve a pedir sin mostrarte un error.
 
 ## Lite y Pro
 
@@ -27,7 +28,8 @@
 | Suelo, paredes y salas siempre conectadas | ✅ | ✅ |
 | Tamaño máximo | 48×48 | 128×128 |
 | Terrenos (autotiling con Terrain Sets) | — | ✅ |
-| Entidades: punto de inicio y cofres (con tu propia escena) | — | ✅ |
+| Salas con intención: sala del jefe (siempre la más lejana), salas de tesoro | — | ✅ |
+| Entidades: punto de inicio, jefe y cofres (con tu propia escena) | — | ✅ |
 | Exportar e importar mapas `.json` | — | ✅ |
 | API para tu juego (`GenMapAPI`) y carga de mapas exportados sin Ollama | — | ✅ |
 | Presets con nombre | — | ✅ |

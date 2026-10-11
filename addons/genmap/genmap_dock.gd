@@ -26,6 +26,7 @@ const ADVANCED_OPEN_TEXT := "▾ Ajustes avanzados"
 const ADVANCED_CLOSED_TEXT := "▸ Ajustes avanzados"
 const STAGE_TEXT := {
 	"ollama": "Esperando al modelo...",
+	"retry": "El modelo devolvió un mapa no válido; reintentando...",
 	"plan": "Calculando el mapa...",
 	"paint": "Pintando tiles...",
 }

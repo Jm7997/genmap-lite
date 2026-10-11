@@ -22,6 +22,8 @@ const OllamaClient := preload("res://addons/genmap/ollama_client.gd")
 const MapGenerator := preload("res://addons/genmap/map_generator.gd")
 ## Modelo de Ollama usado si [code]config[/code] no indica otro.
 const DEFAULT_MODEL := "qwen3:8b"
+## Reintentos si el modelo devuelve un layout inválido o sin salas dentro del mapa.
+const DEFAULT_RETRIES := 1
 const UNDO_ACTION_NAME := "GenMap: generar mapa"
 
 var _client: OllamaClient
@@ -71,16 +73,31 @@ func generate_dungeon(prompt: String, config: Dictionary = {}) -> Dictionary:
 	var client := _get_client()
 	client.host = str(config.get("host", OllamaClient.DEFAULT_HOST))
 	client.timeout_seconds = float(config.get("timeout", OllamaClient.DEFAULT_TIMEOUT_SECONDS))
-	generation_progress.emit("ollama", -1.0)
-	client.generate(prompt, model, settings.generate_entities == true)
-	var outcome: Dictionary = await client.completed
-
-	if generation != _generation:
-		return _stale()
-	if outcome.has("error"):
-		return _end(outcome)
+	var retries := maxi(int(config.get("retries", DEFAULT_RETRIES)), 0)
+	var map_data := {}
+	var plan := {}
+	# Los modelos pequeños fallan de vez en cuando (JSON roto, salas fuera del mapa): en lugar de
+	# mostrar un error, se vuelve a pedir. Los errores de red o de instalación no se reintentan.
+	for attempt in retries + 1:
+		generation_progress.emit("ollama" if attempt == 0 else "retry", -1.0)
+		client.generate(prompt, model, settings.generate_entities == true)
+		var outcome: Dictionary = await client.completed
+		if generation != _generation:
+			return _stale()
+		if outcome.has("error"):
+			if outcome.get("retryable", false) and attempt < retries:
+				continue
+			return _end(outcome)
+		map_data = outcome.data
+		plan = await _make_plan(map_data, settings)
+		if generation != _generation:
+			return _stale()
+		if not plan.has("error") or attempt == retries:
+			break
+	if plan.has("error"):
+		return _end(plan)
 	var meta := {"prompt": prompt, "model": model}
-	return await _build_and_apply(outcome.data, meta, layer_id, settings, config, generation)
+	return await _apply_and_attach(plan, map_data, meta, layer_id, settings, config, generation)
 
 
 ## Comprueba si Ollama responde y qué modelos tiene instalados, sin generar nada.
@@ -98,13 +115,21 @@ func _exit_tree() -> void:
 
 func _build_and_apply(map_data: Dictionary, meta: Dictionary, layer_id: int, settings: Dictionary,
 		config: Dictionary, generation: int) -> Dictionary:
-	# Matemáticas en un hilo del pool; job.done llega ya en el hilo principal (call_deferred).
-	generation_progress.emit("plan", -1.0)
-	var job := MapGenerator.start_plan(map_data, settings)
-	var plan: Dictionary = await job.done
+	var plan := await _make_plan(map_data, settings)
 	if generation != _generation:
 		return _stale()
+	return await _apply_and_attach(plan, map_data, meta, layer_id, settings, config, generation)
 
+
+# Matemáticas en un hilo del pool; job.done llega ya en el hilo principal (call_deferred).
+func _make_plan(map_data: Dictionary, settings: Dictionary) -> Dictionary:
+	generation_progress.emit("plan", -1.0)
+	var job := MapGenerator.start_plan(map_data, settings)
+	return await job.done
+
+
+func _apply_and_attach(plan: Dictionary, map_data: Dictionary, meta: Dictionary, layer_id: int,
+		settings: Dictionary, config: Dictionary, generation: int) -> Dictionary:
 	# Tras cada await la capa pudo liberarse: se recupera por id, nunca por referencia guardada.
 	var layer := instance_from_id(layer_id) as TileMapLayer
 	if layer == null or not layer.is_inside_tree():

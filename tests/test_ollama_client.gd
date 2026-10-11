@@ -10,6 +10,7 @@ func _run() -> bool:
 	_test_anchor_always_fits()
 	_test_validate_layout()
 	_test_parse_tags_response()
+	_test_retryable_flag()
 	print("ollama_client OK")
 	return true
 
@@ -86,6 +87,11 @@ func _test_validate_layout() -> void:
 	assert(OllamaClient.validate_layout(no_spawn, false).has("data"), "spawn no hace falta sin entidades")
 
 	assert(OllamaClient.validate_layout([], false).has("error"), "la raíz debe ser un objeto")
+
+
+func _test_retryable_flag() -> void:
+	assert(OllamaClient._fail("x", true).retryable == true)
+	assert(not OllamaClient._fail("x").has("retryable"), "por defecto un error no se reintenta")
 
 
 func _test_parse_tags_response() -> void:

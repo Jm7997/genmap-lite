@@ -318,14 +318,17 @@ func _parse_response(result: int, code: int, body: PackedByteArray) -> Dictionar
 
 	var content: Variant = envelope.get("response")
 	if not (content is String) or content.strip_edges().is_empty():
-		return _fail("El modelo devolvió una respuesta vacía. Prueba de nuevo.")
+		return _fail("El modelo devolvió una respuesta vacía. Prueba de nuevo.", true)
 	if envelope.get("done_reason", "") == "length":
 		return _fail("La respuesta del modelo se cortó por longitud. Pide un mapa con menos habitaciones.")
 
 	var layout: Variant = _parse_json(_extract_object(content))
 	if layout == null:
-		return _fail("El modelo devolvió JSON malformado. Prueba de nuevo o usa un modelo mayor.")
-	return validate_layout(layout, _include_entities)
+		return _fail("El modelo devolvió JSON malformado. Prueba de nuevo o usa un modelo mayor.", true)
+	var validated := validate_layout(layout, _include_entities)
+	if validated.has("error"):
+		validated.retryable = true  # el layout era inválido: otra petición puede salir bien
+	return validated
 
 
 func _describe_network_error(result: int) -> String:
@@ -438,5 +441,6 @@ static func _parse_json(text: String) -> Variant:
 	return json.data
 
 
-static func _fail(message: String) -> Dictionary:
-	return {"error": message}
+## retryable = el fallo es del contenido que generó el modelo: GenMapAPI puede volver a pedirlo.
+static func _fail(message: String, retryable := false) -> Dictionary:
+	return {"error": message, "retryable": true} if retryable else {"error": message}

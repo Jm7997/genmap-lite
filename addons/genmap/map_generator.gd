@@ -33,6 +33,9 @@ class PlanJob extends RefCounted:
 const ENTITIES_NODE_NAME := "GenMapEntities"
 const SPAWN_NODE_NAME := "PlayerSpawn"
 const CHEST_NODE_PREFIX := "Chest"
+const BOSS_NODE_NAME := "BossSpawn"
+## Metadato de GenMapEntities con la información de cada sala (ver room_info en el resultado).
+const ROOMS_META := "genmap_rooms"
 const MIN_MAP_SIZE := 3  # 1 de suelo + 2 de pared
 const INVALID_CELL := Vector2i(-1, -1)
 const MAX_MAP_SIZE := 48  # GenMap Pro admite hasta 128x128
@@ -108,6 +111,7 @@ static func build_plan(map_data: Dictionary, settings: Dictionary = {}) -> Dicti
 
 	var floors := {}  # Vector2i -> true; conjunto para no repetir celdas
 	var room_rects: Array[Rect2i] = []
+	var room_types: Array[String] = []  # paralelo a room_rects
 	var rooms_clipped := 0
 	var rooms_discarded := 0
 	for room in _array(map_data, "rooms"):
@@ -128,6 +132,8 @@ static func build_plan(map_data: Dictionary, settings: Dictionary = {}) -> Dicti
 			for x in range(rect.position.x, rect.end.x):
 				floors[Vector2i(x, y)] = true
 		room_rects.append(rect)
+		var room_type: Variant = room.get("type")
+		room_types.append(room_type if room_type is String else "normal")
 
 	if room_rects.is_empty():
 		return _fail("Ninguna habitación cae dentro del mapa %dx%d. Prueba de nuevo." % [w, h])
@@ -167,6 +173,8 @@ static func build_plan(map_data: Dictionary, settings: Dictionary = {}) -> Dicti
 		"chest_cells": no_chests,
 		"chests_moved": 0,
 		"chests_discarded": 0,
+		"boss_cell": INVALID_CELL,
+		"room_info": [],
 	}
 	return plan
 
@@ -270,6 +278,7 @@ static func _apply_result(plan: Dictionary, prepared: Dictionary) -> Dictionary:
 		"chests": plan.chest_cells.size() if plan.entities_enabled else 0,
 		"chests_moved": plan.chests_moved,
 		"chests_discarded": plan.chests_discarded,
+		"room_info": plan.room_info,
 		"previous_tile_map_data": prepared.previous,
 	}
 
